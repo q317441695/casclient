@@ -23,6 +23,7 @@ import javax.naming.NamingException;
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,17 @@ public abstract class AbstractConfigurationFilter implements Filter {
      */
     protected final String getPropertyFromInitParams(final FilterConfig filterConfig, final String propertyName,
             final String defaultValue) {
-        final String value = filterConfig.getInitParameter(propertyName);
+    	String _value = filterConfig.getInitParameter(propertyName);
+    	if(StringUtils.isBlank(_value)){
+    		if("serverName".equals(propertyName)){
+    			_value = PropertiesUtil.getPropertiesValue(propertyName);
+    		}else{
+    			_value = PropertiesUtil.getPropertiesValue(filterConfig.getFilterName().replace(" ", "_") 
+        				+ "." + propertyName);
+    		}
+    	}
+    	final String value = _value;
+        //final String value = filterConfig.getInitParameter(propertyName);
 
         if (CommonUtils.isNotBlank(value)) {
             if ("renew".equals(propertyName)) {

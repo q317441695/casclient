@@ -1,0 +1,10 @@
+/.git
+/.settings
+/build
+/bin
+.classpath
+.myumldata
+.tomcatplugin
+.project
+.myeclipse
+.externalToolBuilders
