@@ -11,10 +11,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -28,7 +31,7 @@ public class PropertiesUtil {
 	/**
 	 * 日志
 	 */
-	protected final Logger logger = LoggerFactory.getLogger(getClass());
+	protected final static Logger logger = LoggerFactory.getLogger(PropertiesUtil.class);
 	
 	/**
 	 * cas 配置內容緩存
@@ -45,7 +48,7 @@ public class PropertiesUtil {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.println(getPropertiesValue("222"));
+		System.out.println(getPropertiesValue("nidaye"));
 	}
 
 	/**
@@ -63,33 +66,116 @@ public class PropertiesUtil {
 			obj = casProperties.get(name);
 		}
 		if(null == obj){
-			Properties prop = new Properties();
 			String path= PropertiesUtil.class.getClassLoader().getResource(File.separator).getPath();
-			path = java.net.URLDecoder.decode(path);
+			try {
+				path = java.net.URLDecoder.decode(path,"utf-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
 			path=path.substring(0, path.length()-1);
 			if(null == filelist || filelist.isEmpty()){
 				filelist= getFiles(path);
 			}
-			for(File file:filelist){
-				InputStream in = null;
-				try {
-					in = new FileInputStream(file);
-					prop.load(in);
-					value = prop.getProperty(name);
-					if(StringUtils.isNotBlank(value)){
-						casProperties.put(name, prop.getProperty(name));
-						break;
-					}
-				} catch (FileNotFoundException e1) {
-					e1.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			value = getValueFromProperties(name);
 		}else{
 			value = obj.toString();
 		}
 		return value;
+	}
+	
+	/**
+	 * 从配置文件中获取值
+	 * @param value
+	 * @param name
+	 * @return
+	 */
+	private static String getValueFromProperties(String name){
+		String value = "";
+		Properties prop = null;
+		for(File file:filelist){
+			prop = new Properties();
+			InputStream in = null;
+			try {
+				in = new FileInputStream(file);
+				prop.load(in);
+				value = prop.getProperty(name);
+				if(StringUtils.isNotBlank(value)){
+					//存在匹配
+					if(matcherValue(value)){
+						//匹配可以
+						String key = getReplaceKey(value);
+						Object object = casProperties.get(key);
+						String replaceValue = "";
+						if(null == object){
+							replaceValue = getReplaceKeyValue(key);
+						}else{
+							replaceValue = object.toString();
+						}
+						if(StringUtils.isBlank(replaceValue)){
+							CommonUtils.assertNotNull(replaceValue, key + "'s value cannot be null.");
+						}
+						value = value.replaceAll("\\$\\{"+key+"\\}", replaceValue);
+					}
+					casProperties.put(name, value);
+					break;
+				}
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return value;
+	}
+	
+	/**
+	 * 获取替代的值
+	 * @param key
+	 * @return
+	 */
+	private static String getReplaceKeyValue(String key){
+		String value = null;
+		Properties prop = null;
+		for(File file:filelist){
+			prop = new Properties();
+			InputStream in = null;
+			try {
+				in = new FileInputStream(file);
+				prop.load(in);
+				value = prop.getProperty(key);
+				if(null != value){
+					break;
+				}
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return value;
+	}
+	
+	/**
+	 * 获取替代的key
+	 * @param value 值
+	 * @return 字符串
+	 */
+	private static String getReplaceKey(String value){
+		int start = value.indexOf("${");
+		int end = value.indexOf("}");
+		String name = value.substring(start+2, end);
+		return name;
+	}
+	
+	/**
+	 * 判断是否匹配
+	 * @param value 匹配对象
+	 * @return true or fasle
+	 */
+	private static boolean matcherValue(String value){
+		Pattern p = Pattern.compile("(\\S+|\\S?)\\$\\{\\S+\\}(\\S+|\\S?)");
+		Matcher m = p.matcher(value);
+		return m.matches();
 	}
 
 	/**

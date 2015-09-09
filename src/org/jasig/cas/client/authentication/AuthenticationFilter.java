@@ -121,10 +121,14 @@ public class AuthenticationFilter extends AbstractCasFilter {
             setWebService(getPropertyFromInitParams(filterConfig, "webService", null));
             logger.trace("Loaded webService parameter: {}", this.webService);
             if(StringUtils.isBlank(this.webService)){
-            	if(StringUtils.isNotBlank(casServerLoginUrl)){
-            		webService = this.casServerLoginUrl.replaceAll("login", REPLACESTR);
-            		this.setWebService(webService);
-            	}
+	            if(StringUtils.isNotBlank(casServerLoginUrl)){
+	            	webService = this.casServerLoginUrl.replaceAll("login", REPLACESTR);
+	            	this.setWebService(webService);
+	            }
+            }else{
+            	// 因部分网络配置特殊，添加一个自配置hession地址
+            	webService += "/" + REPLACESTR;
+            	this.setWebService(webService);
             }
             
             final String ignorePattern_302Code = getPropertyFromInitParams(filterConfig, "ignorePattern_302Code", null);

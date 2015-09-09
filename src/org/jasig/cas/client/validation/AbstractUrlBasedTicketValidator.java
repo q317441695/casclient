@@ -222,12 +222,18 @@ public abstract class AbstractUrlBasedTicketValidator implements TicketValidator
         }
     }
     
-    private final String removeTargetTicket(String validationUrl){
+    private final String removeTargetTicket(String validationUrl) {
     	String newValidationUrl = "";
     	int serviceIndex = validationUrl.indexOf("&service=");
     	String serviceValidate = validationUrl.substring(0,serviceIndex+9);
     	validationUrl = validationUrl.substring(serviceIndex+9);
-    	validationUrl = java.net.URLDecoder.decode(validationUrl);
+    	try{
+    		validationUrl = java.net.URLDecoder.decode(validationUrl,"utf-8");
+    	}catch(UnsupportedEncodingException e){
+    		logger.error(e.getMessage());
+    	}catch(Exception e){
+    		logger.error(e.getMessage());
+    	}
     	int start = validationUrl.indexOf(CONST_PARAM_TGT_TICKET);
     	newValidationUrl = validationUrl.substring(start + CONST_PARAM_TGT_TICKET.length() + 1);
     	int end = newValidationUrl.indexOf("&");
@@ -237,7 +243,13 @@ public abstract class AbstractUrlBasedTicketValidator implements TicketValidator
     	}else{
     		newValidationUrl = validationUrl.substring(0,start-1);
     	}
-    	newValidationUrl = java.net.URLEncoder.encode(newValidationUrl);
+    	try{
+    		newValidationUrl = java.net.URLEncoder.encode(newValidationUrl,"utf-8");
+    	}catch(UnsupportedEncodingException e){
+    		logger.error(e.getMessage());
+    	}catch(Exception e){
+    		logger.error(e.getMessage());
+    	}
     	newValidationUrl = serviceValidate + newValidationUrl;
     	return newValidationUrl;
     }

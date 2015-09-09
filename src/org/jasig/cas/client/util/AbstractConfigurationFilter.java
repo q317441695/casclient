@@ -74,6 +74,9 @@ public abstract class AbstractConfigurationFilter implements Filter {
     			_value = PropertiesUtil.getPropertiesValue(filterConfig.getFilterName().replace(" ", "_") 
         				+ "." + propertyName);
     		}
+    		if("webService".equals(propertyName)){
+    			_value = PropertiesUtil.getPropertiesValue(propertyName);
+    		}
     	}
     	final String value = _value;
         //final String value = filterConfig.getInitParameter(propertyName);
