@@ -25,9 +25,11 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.jasig.cas.client.ssl.HttpURLConnectionFactory;
 import org.jasig.cas.client.ssl.HttpsURLConnectionFactory;
 import org.jasig.cas.client.util.CommonUtils;
+import org.jasig.cas.client.util.PropertiesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -204,7 +206,12 @@ public abstract class AbstractUrlBasedTicketValidator implements TicketValidator
             //final String serverResponse = retrieveResponseFromServer(new URL(validationUrl), ticket);
             final String serverResponse;
             if(validationUrl.indexOf("targetTicket")>-1){
-            	final String newValidationUrl = removeTargetTicket(validationUrl);
+            	String newValidationUrl = removeTargetTicket(validationUrl);
+            	final String webService = PropertiesUtil.getPropertiesValue("webService");
+            	if(StringUtils.isNotBlank(webService)){
+            		int start = newValidationUrl.indexOf("/serviceValidate");
+            		newValidationUrl = webService + newValidationUrl.substring(start);
+            	}
             	serverResponse = retrieveResponseFromServer(new URL(newValidationUrl), ticket);
             }else{
             	serverResponse = retrieveResponseFromServer(new URL(validationUrl), ticket);
